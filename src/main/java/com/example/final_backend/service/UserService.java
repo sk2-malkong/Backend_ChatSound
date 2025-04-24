@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 import java.util.HashMap;
 import java.time.LocalDateTime;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * 사용자 관련 로직 처리 서비스
@@ -38,17 +40,26 @@ public class UserService {
     }
 
     // 이미지 업로드
-    public String uploadProfileImage(String userId, MultipartFile file) {
+    public String uploadProfileImage(String userId, MultipartFile file) throws IOException {
         UserEntity user = authRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 예시: 실제 저장 로직 대신 파일명을 저장
-        String filename = file.getOriginalFilename(); // or S3에 업로드 시 URL
-        user.setProfileImage(filename);
+        String uploadDir = System.getProperty("user.dir") + "/upload/profile";
+        String filename = user.getUsername() + "_" + file.getOriginalFilename(); // ✅ username → user.getUsername()
+        File savedFile = new File(uploadDir, filename);
+
+        if (!savedFile.getParentFile().exists()) {
+            savedFile.getParentFile().mkdirs(); // ✅ 디렉토리 생성
+        }
+
+        file.transferTo(savedFile); // ✅ 예외 발생 가능하므로 throws IOException
+
+        String imageUrl = "http://localhost:8080/images/profile/" + filename;  // 배포 시 도메인으로 변경 필요
+        user.setProfileImage(imageUrl);
         user.setUpdatedAt(LocalDateTime.now());
 
         authRepository.save(user);
-        return filename;
+        return imageUrl; // ✅ URL 반환
     }
 
     // 회원 탈퇴

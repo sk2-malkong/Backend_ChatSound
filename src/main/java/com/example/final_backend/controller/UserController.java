@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 import java.util.Map;
 
 
@@ -73,10 +75,11 @@ public class UserController {
                     schema = @Schema(type = "string", format = "binary")
             )
             @RequestParam("file") MultipartFile file
-    ) {
+    ) throws IOException {
         String imageUrl = userService.uploadProfileImage(userDetails.getId(), file);
         return ResponseEntity.ok("이미지 업로드 성공: " + imageUrl);
     }
+
 
     // ✅ 회원 탈퇴
     @Operation(summary = "회원 탈퇴", description = "로그인한 사용자의 계정을 삭제합니다.")

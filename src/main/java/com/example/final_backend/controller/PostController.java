@@ -44,8 +44,8 @@ public class PostController {
     @Operation(summary = "상세 게시물 조회", description = "게시물 ID를 통해 해당 게시물의 상세 정보를 조회합니다.")
     @ApiResponse(responseCode = "200", description = "지정한 ID에 해당하는 게시물의 상세 정보가 반환됩니다.")
     @GetMapping("/{postId}")
-    public ResponseEntity<PostDto.Response> getPost(@PathVariable int postId) {
-        return ResponseEntity.ok(postService.getPostById(postId));
+    public ResponseEntity<PostDto.Response> getPost(@PathVariable int postId, @RequestParam(defaultValue = "true") boolean increaseView) {
+        return ResponseEntity.ok(postService.getPostById(postId, increaseView));
     }
 
     // 게시물 생성

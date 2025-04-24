@@ -53,6 +53,7 @@
 ---
 
 ## 프로그램 구성
+```
 backend/
 └── src/
     └── main/
@@ -98,7 +99,7 @@ backend/
         │                   └── CommentService.java
         └── resources/
             └── application.properties
-
+```
 
 
 ---
