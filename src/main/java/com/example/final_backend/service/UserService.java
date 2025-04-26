@@ -1,17 +1,15 @@
 package com.example.final_backend.service;
 
 import com.example.final_backend.dto.UpdateProfileDto;
+import com.example.final_backend.dto.UserProfileDto;
 import com.example.final_backend.entity.PenaltyCountEntity;
 import com.example.final_backend.entity.UserEntity;
 import com.example.final_backend.entity.UserLimitsEntity;
 import com.example.final_backend.repository.AuthRepository;
 import com.example.final_backend.repository.PenaltyCountRepository;
 import com.example.final_backend.repository.UserLimitsRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,9 +32,20 @@ public class UserService {
     private final UserLimitsRepository userLimitsRepository;
 
     // 프로필 정보 조회
-    public UserEntity getProfile(String userId) {
-        return authRepository.findById(userId)
+    public UserProfileDto getProfileDto(String userId) {
+        UserEntity user = authRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        UserProfileDto dto = new UserProfileDto();
+        dto.setUserId(user.getUserId());
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setProfileImage(user.getProfileImage());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+
+        return dto;
     }
 
     // 프로필 정보 수정

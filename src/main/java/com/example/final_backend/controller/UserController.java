@@ -2,7 +2,6 @@ package com.example.final_backend.controller;
 
 import com.example.final_backend.dto.UpdateProfileDto;
 import com.example.final_backend.dto.UserProfileDto;
-import com.example.final_backend.entity.UserEntity;
 import com.example.final_backend.security.CustomUserDetails;
 import com.example.final_backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,18 +31,8 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/profile")
     public ResponseEntity<UserProfileDto> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        UserEntity user = userService.getProfile(userDetails.getId());
-
-        UserProfileDto dto = new UserProfileDto();
-        dto.setUserId(user.getUserId());
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setProfileImage(user.getProfileImage());
-        dto.setCreatedAt(user.getCreatedAt());
-        dto.setUpdatedAt(user.getUpdatedAt());
-
-        return ResponseEntity.ok(dto);  // 이제 오류 안 남
+        UserProfileDto dto = userService.getProfileDto(userDetails.getId());
+        return ResponseEntity.ok(dto);
     }
 
 
