@@ -42,9 +42,19 @@ public class SecurityConfig {
     }
 
     // 인증 매니저 등록
-    @Bean
+    // authenticationManager.authenticate가
+    // DaoAuthenticationProvider.authenticate() 호출하게 되면
+    // 내부에서 UserDetailsServiceImpl.java 에 있는
+    // UserDetailsServiceImpl.loadUserByUsername(id)를
+    // 자동 호출해 DB에서 사용자 정보를
+    // ID + PW를 기반으로 인증 프로세스를 시작하게 되는데
+    // 인증이 완료 되면 UserEntity를 기반으로 CustomUserDetails가 생성됨
+                                                      // AuthenticationConfiguration authConfig는
+                                                      // Spring이 자동 생성한 AuthenticationManager를
+    @Bean                                             // getAuthenticationManager()로 꺼내 쓰기 위해서 사용
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         // 로그인 인증 처리에 사용(AuthService에서 사용)
+        // 내부에 DaoAuthenticationProvider가 들어 있어서 반환시 실행됨
         return authConfig.getAuthenticationManager();
     }
 
@@ -96,6 +106,7 @@ public class SecurityConfig {
                         })
                 )
                 // 2) JWT 필터 추가(기존 코드와 동일)
+                // JwtAuthorizationFilter는 UsernamePasswordAuthenticationFilter 보다 먼저 실행
                 .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
 
 

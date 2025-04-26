@@ -1,12 +1,15 @@
 package com.example.final_backend.service;
 
+import com.example.final_backend.entity.BadwordLogEntity;
 import com.example.final_backend.repository.AuthRepository;
 import com.example.final_backend.dto.PostDto;
 import com.example.final_backend.entity.PostEntity;
 import com.example.final_backend.entity.UserEntity;
+import com.example.final_backend.repository.BadwordLogRepository;
 import com.example.final_backend.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
@@ -26,57 +29,88 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final AuthRepository authRepository;
+    private final RestTemplate purgoRestTemplate;
+    private final BadwordLogRepository badwordLogRepository;
+    private final UserService userService;
 
-    private final String gatewayUrl = "http://localhost:8001/proxy/analyze";
+    @Value("${proxy.server.url}")
+    private String gatewayUrl;
 
-    // ✅ 욕설 필터링 함수 (FastAPI 호출)
-    private String getFilteredText(String text) {
+    // 욕설 필터링 함수 (FastAPI 호출)
+    private String getFilteredText(String text, UserEntity user, PostEntity post) {
         try {
             System.out.println("📤 FastAPI로 전송할 텍스트 (게시글): " + text);
-            RestTemplate restTemplate = new RestTemplate();
 
             Map<String, String> body = new HashMap<>();
             body.put("text", text);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-
             HttpEntity<Map<String, String>> entity = new HttpEntity<>(body, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(gatewayUrl, entity, Map.class);
+            ResponseEntity<Map> response = purgoRestTemplate.postForEntity(gatewayUrl, entity, Map.class);
 
-            if (response.getStatusCode() == HttpStatus.OK) {
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> result = response.getBody();
-                Boolean isAbusive = (Boolean) result.get("is_abusive");
-                String rewritten = (String) result.get("rewritten_text");
 
-                if (isAbusive != null && isAbusive) {
-                    System.out.println("🛑 욕설 감지됨 → 게시글 내용 정제됨");
+                System.out.println("📦 FastAPI 응답 전체: " + result);
+
+                // final_decision 기준으로 판단
+                Object decision = result.get("final_decision");
+                Boolean isAbusive = decision != null && decision.toString().equals("1");
+
+                // result 객체 안의 rewritten_text 추출
+                Map<String, Object> resultInner = (Map<String, Object>) result.get("result");
+                String rewritten = resultInner != null ? (String) resultInner.get("rewritten_text") : text;
+
+                System.out.println("욕설 여부: " + isAbusive);
+                System.out.println("대체 문장: " + rewritten);
+
+                if (Boolean.TRUE.equals(isAbusive)) {
+                    BadwordLogEntity log = new BadwordLogEntity();
+                    log.setUser(user);
+                    log.setPost(post);
+                    log.setOriginalWord(text);
+                    log.setFilteredWord(rewritten);
+                    log.setCreatedAt(LocalDateTime.now());
+                    badwordLogRepository.save(log);
+
+                    userService.applyPenalty(user.getUserId());
+
                     return rewritten;
                 }
             }
         } catch (Exception e) {
-            System.out.println("❌ FastAPI 요청 실패 (게시글): " + e.getMessage());
+            System.out.println("❌ 욕설 분석 실패: " + e.getMessage());
         }
-
         return text;
     }
+
+
 
     // 게시글 작성
     @Transactional
     public PostDto.Response createPost(String userId, PostDto.Request request) {
-        UserEntity user = authRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + userId));
+        UserEntity user = authRepository.findById(userId).orElseThrow();
+
+        // 제한 여부 확인
+        userService.checkUserLimit(user);
 
         PostEntity post = new PostEntity();
         post.setUser(user);
-        post.setTitle(getFilteredText(request.getTitle()));   // 제목 필터링
-        post.setContent(getFilteredText(request.getContent())); // 내용 필터링
         post.setCreatedAt(LocalDateTime.now());
         post.setUpdatedAt(LocalDateTime.now());
         post.setCount(0);
+        post.setTitle(request.getTitle());
+        post.setContent(request.getContent());
 
-        PostEntity savedPost = postRepository.save(post);
-        return mapToDto(savedPost);
+        // 우선 저장 후 postId 생성
+        PostEntity saved = postRepository.save(post);
+
+        // 제목과 내용 욕설 감지 및 로그 저장
+        saved.setTitle(getFilteredText(request.getTitle(), user, saved));
+        saved.setContent(getFilteredText(request.getContent(), user, saved));
+        return mapToDto(postRepository.save(saved));
     }
 
     // 게시글 목록 조회
@@ -120,12 +154,18 @@ public class PostService {
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다: " + postId));
 
+        // 작성자 확인
         if (!post.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
         }
 
-        post.setTitle(getFilteredText(request.getTitle()));
-        post.setContent(getFilteredText(request.getContent()));
+        UserEntity user = post.getUser();
+
+        // 제한 여부 확인
+        userService.checkUserLimit(user);
+
+        post.setTitle(getFilteredText(request.getTitle(), user, post));
+        post.setContent(getFilteredText(request.getContent(), user, post));
         post.setUpdatedAt(LocalDateTime.now());
 
         PostEntity updatedPost = postRepository.save(post);
@@ -138,6 +178,7 @@ public class PostService {
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다: " + postId));
 
+        // 작성자 확인
         if (!post.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("게시글 삭제 권한이 없습니다.");
         }

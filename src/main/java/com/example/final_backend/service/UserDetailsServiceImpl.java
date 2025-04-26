@@ -24,11 +24,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final AuthRepository authRepository;
 
+    //loadUserByUsername(String id)는
+    //Spring Security가 로그인 처리 시 자동으로 호출하는 메서드
     @Override
     public UserDetails loadUserByUsername(String id) throws UsernameNotFoundException {
+        //사용자 ID 기준으로 DB에서 조회
         UserEntity user = authRepository.findById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + id));
 
+        //UserEntity를 UserDetails 타입인 CustomUserDetails로 변환
+        //이후 Spring Security 인증 흐름에서 사용됨
         return new CustomUserDetails(user);
     }
 }

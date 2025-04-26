@@ -26,7 +26,7 @@ public class PostEntity {
     private int postId;
 
     // 사용자 식별 번호
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
     @JsonBackReference
     private UserEntity user;

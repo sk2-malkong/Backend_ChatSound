@@ -26,7 +26,7 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
 
-    // ✅ 프로필 조회
+    // 프로필 조회
     @Operation(summary = "프로필 조회", description = "로그인한 사용자의 프로필 정보를 반환합니다.")
     @ApiResponse(responseCode = "200", description = "프로필 조회 성공")
     @SecurityRequirement(name = "bearerAuth")
@@ -47,7 +47,7 @@ public class UserController {
     }
 
 
-    // ✅ 프로필 수정
+    // 프로필 수정
     @Operation(summary = "프로필 수정", description = "닉네임 또는 프로필 이미지를 수정합니다.")
     @ApiResponse(responseCode = "200", description = "프로필 수정 성공")
     @SecurityRequirement(name = "bearerAuth")
@@ -60,7 +60,7 @@ public class UserController {
         return ResponseEntity.ok("프로필이 성공적으로 수정되었습니다.");
     }
 
-    // ✅ 프로필이미지 업로드
+    // 프로필이미지 업로드
     @Operation(
             summary = "프로필 이미지 업로드",
             description = "사용자의 프로필 이미지를 업로드합니다."
@@ -81,7 +81,7 @@ public class UserController {
     }
 
 
-    // ✅ 회원 탈퇴
+    // 회원 탈퇴
     @Operation(summary = "회원 탈퇴", description = "로그인한 사용자의 계정을 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "회원 탈퇴가 완료되었습니다.")
     @SecurityRequirement(name = "bearerAuth")
@@ -94,7 +94,7 @@ public class UserController {
     }
 
 
-    // ✅ 패널티 횟수 조회
+    // 패널티 횟수 조회
     @Operation(summary = "패널티 횟수 조회", description = "로그인한 사용자의 누적 패널티 횟수를 반환합니다.")
     @ApiResponse(responseCode = "200", description = "패널티 횟수가 성공적으로 반환됩니다.")
     @SecurityRequirement(name = "bearerAuth")
@@ -105,7 +105,7 @@ public class UserController {
     }
 
 
-    // ✅ 제한 정보 조회
+    // 제한 정보 조회
     @PostMapping("/limits")
     @Operation(summary = "제한 정보 조회", description = "로그인한 사용자의 서비스 이용 제한 정보를 반환합니다.")
     @ApiResponse(responseCode = "200", description = "제한 정보가 성공적으로 반환됩니다.")

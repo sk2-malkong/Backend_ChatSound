@@ -2,6 +2,7 @@ package com.example.final_backend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,12 +17,13 @@ import java.time.LocalDate;
 @Table(name="penaltyCounts")
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PenaltyCountEntity {
     // 사용자 식별 번호
     @Id
     private int userId;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "userId")
     private UserEntity user;

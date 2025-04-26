@@ -31,9 +31,9 @@ public class PostDto {
         private String content;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
-        private String image;
-        private int count;
-        private int commentCount;
+        // String image;
+        private int count;          // 조회수
+        private int commentCount;   // 해당 게시글에 달린 댓글 수
     }
 
     @Data

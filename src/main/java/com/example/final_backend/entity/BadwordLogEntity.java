@@ -24,19 +24,19 @@ public class BadwordLogEntity {
     private int logId;
 
     // 사용자 식별 번호
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference
     @JoinColumn(name = "userId")
     private UserEntity user;
 
     // 게시물 식별 번호
-    @OneToOne
-    @JoinColumn(name = "postId")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "postId", nullable = true)
     private PostEntity post;
 
     // 댓글 식별 번호
-    @OneToOne
-    @JoinColumn(name = "commentId")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commentId", nullable = true)
     private CommentEntity comment;
 
     // 사용한 비속어
@@ -46,5 +46,5 @@ public class BadwordLogEntity {
     private String filteredWord;
 
     // 비속어 사용 일자
-    private LocalDateTime detectedAt;
+    private LocalDateTime createdAt;
 }

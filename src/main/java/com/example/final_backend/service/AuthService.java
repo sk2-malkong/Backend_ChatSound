@@ -1,9 +1,13 @@
 package com.example.final_backend.service;
 
+import com.example.final_backend.entity.PenaltyCountEntity;
+import com.example.final_backend.entity.UserLimitsEntity;
 import com.example.final_backend.repository.AuthRepository;
 import com.example.final_backend.dto.AuthDto;
 import com.example.final_backend.dto.JwtDto;
 import com.example.final_backend.entity.UserEntity;
+import com.example.final_backend.repository.PenaltyCountRepository;
+import com.example.final_backend.repository.UserLimitsRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
@@ -15,6 +19,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -37,7 +42,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final RedisService redisService;
+    private final UserLimitsRepository userLimitsRepository;
+    private final PenaltyCountRepository penaltyCountRepository;
 
     // 회원가입
     @Transactional
@@ -64,6 +70,24 @@ public class AuthService {
 
         authRepository.save(user);
 
+        // 회원가입 시 기본 PenaltyCountEntity 생성
+        PenaltyCountEntity penalty = new PenaltyCountEntity();
+        penalty.setUser(user);
+        penalty.setPenaltyCount(0);
+        penalty.setLastUpdate(LocalDate.now());
+
+        penaltyCountRepository.save(penalty);
+
+        // 회원가입 시 기본 UserLimitsEntity 생성
+        UserLimitsEntity limits = new UserLimitsEntity();
+        limits.setUser(user);
+        limits.setIsActive(true); // 기본값 활성화 상태
+        limits.setStartDate(null);
+        limits.setEndDate(null);
+
+        userLimitsRepository.save(limits);
+
+
         // 이메일 전송
         sendWelcomeEmail(user.getEmail(), user.getUsername());
     }
@@ -72,7 +96,16 @@ public class AuthService {
     // 로그인
     public JwtDto.TokenResponse login(JwtDto.LoginRequest loginRequest) {
         try {
+            //사용자가 입력한 아이디와 비밀번호를 UsernamePasswordAuthenticationToken 객체로
+            // 래핑하여 AuthenticationManager에게 전달함
+            // 즉 AuthenticationManager에게  "이 사용자(id/pw)를 인증해줘"라고 요청하는 거임
+
             // authenticationManager를 이용해 ID/PW 인증 시도
+            // 그 시도를 내부적으로 SecurityConfig.java에서
+            // 내부의 DaoAuthenticationProvider.authenticate() 호출함
+
+            //결국 authentication는 사용자가 입력한 id/pw로 인증 시도하고
+            //그 결과로 인증 성공 여부,사용자 정보,권한이 담긴 Authentication를 반환 받는것이 목적
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getId(),

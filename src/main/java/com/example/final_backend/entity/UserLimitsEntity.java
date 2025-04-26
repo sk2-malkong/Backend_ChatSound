@@ -22,7 +22,7 @@ public class UserLimitsEntity {
     @Id
     private int userId;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "userId")
     private UserEntity user;

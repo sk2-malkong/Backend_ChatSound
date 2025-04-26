@@ -23,13 +23,13 @@ public class CommentEntity {
     private int commentId;
 
     // 사용자 식별 번호
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference
     @JoinColumn(name="userId")
     private UserEntity user;
 
     // 게시물 식별 번호
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference
     @JoinColumn(name = "postId")
     private PostEntity post;

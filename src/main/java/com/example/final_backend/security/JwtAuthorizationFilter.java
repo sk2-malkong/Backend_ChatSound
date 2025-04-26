@@ -26,6 +26,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+                                         // OncePerRequestFilter (요청 1건당 1회만 실행)
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -36,15 +37,16 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         // 1. 헤더에서 토큰 추출
+        // ex: "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI..."
         String authHeader = request.getHeader("Authorization");
-
+        // 유효한 Bearer 토큰인지 확인
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response); // 그냥 넘김
             return;
         }
 
         // 2. 토큰에서 userId 추출
-        String token = authHeader.substring(7);
+        String token = authHeader.substring(7); // "Bearer " 이후 실제 토큰만 추출
         String userId = jwtService.extractUsername(token);
 
         // 3. SecurityContext에 인증이 없는 경우에만 실행
