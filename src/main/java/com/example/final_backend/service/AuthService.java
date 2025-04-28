@@ -10,8 +10,6 @@ import com.example.final_backend.repository.PenaltyCountRepository;
 import com.example.final_backend.repository.UserLimitsRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -38,12 +36,12 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AuthService {
     private final AuthRepository authRepository;
-    private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserLimitsRepository userLimitsRepository;
     private final PenaltyCountRepository penaltyCountRepository;
+    private final AsyncService asyncService;
 
     // 회원가입
     @Transactional
@@ -87,10 +85,10 @@ public class AuthService {
 
         userLimitsRepository.save(limits);
 
-
-        // 이메일 전송
-        sendWelcomeEmail(user.getEmail(), user.getUsername());
+        // 비동기로 이메일 전송
+        asyncService.sendWelcomeEmailAsync(user.getEmail(), user.getUsername());
     }
+
 
 
     // 로그인
@@ -174,15 +172,6 @@ public class AuthService {
         if (userId != null) {
             jwtService.logout(userId, accessToken);
         }
-    }
-
-    // 이메일 인증 전송
-    private void sendWelcomeEmail(String email, String username) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("회원가입을 환영합니다!");
-        message.setText(username + "님, 환영합니다. 가입을 축하드립니다!");
-        mailSender.send(message);
     }
 
     // 아이디 조회
