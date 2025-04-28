@@ -1,8 +1,38 @@
-# Backend_Purgo
-- ‘Purgo’(라틴어로 정화하다) -> 온라인 커뮤니티 속 비속어들을 필터링 하여 정제된 깨끗한 말로 바꿔 세상을 정화해나간다는 의미
+![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&height=192&section=header&text=PURGO%20backend&fontSize=90&animation=fadeIn&fontColor=FFF)
+
+
+<p align="center">
+  <img src="https://img.shields.io/badge/redis-%23DC382D.svg?&style=for-the-badge&logo=redis&logoColor=white"/>
+  <img src="https://img.shields.io/badge/spring-%236DB33F.svg?&style=for-the-badge&logo=spring&logoColor=white"/>
+  <img src="https://img.shields.io/badge/fastapi-%23009688.svg?&style=for-the-badge&logo=fastapi&logoColor=white"/>
+  <img src="https://img.shields.io/badge/gradle-%2302303A.svg?&style=for-the-badge&logo=gradle&logoColor=white"/>
+  <img src="https://img.shields.io/badge/java-%23007396.svg?&style=for-the-badge&logo=java&logoColor=white"/>
+  <img src="https://img.shields.io/badge/docker-%232496ED.svg?&style=for-the-badge&logo=docker&logoColor=white"/>
+  <img src="https://img.shields.io/badge/mysql-%234479A1.svg?&style=for-the-badge&logo=mysql&logoColor=white"/>
+    <br>
+  <img src="https://img.shields.io/badge/github-%23181717.svg?&style=for-the-badge&logo=github&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white"/>
+  <img src="https://img.shields.io/badge/postman-%23FF6C37.svg?&style=for-the-badge&logo=postman&logoColor=white"/>
+  <img src="https://img.shields.io/badge/swagger-%2385EA2D.svg?&style=for-the-badge&logo=swagger&logoColor=black"/>
+</p>
+
+
+
+
+
+
+
+# Purgo(라틴어 - 정화하다)
+- 온라인 커뮤니티 속 비속어들을 필터링 하여 정제된 깨끗한 말로 바꿔 세상을 정화해나간다는 의미
+
+
 
 ## 프로젝트 소개
 - 시연용 커뮤니티 backend code
+- 사용자가 작성하는 게시글과 댓글에서 비속어를 실시간 감지 및 대체어 변환을 통해 사용자들에게 비속어에 대한 노출을 줄이기 위해 제작
+- 사용자별 비속어 사용횟수를 기록하고 누적 관리
+- 사용자별 비속어 사용횟수 5회 누적 시 게시글 및 댓글 작성, 수정 제한
+- FastAPI를 통해 비속어 탐지 및 대체어 변환 AI와 연동
 
 ## Member
 - 송보민(PL)   :  마이페이지, DB 연결(MySQL, Redis), JWT, 초기 설정 보수, ERD , 프록시 서버 구현, ai 연동
@@ -14,14 +44,22 @@
 - application.properties 파일 생성
 - 노션 -> 백엔드 설정/application.properties 참고
 
+
 ## 로컬 Docker 설치
 - docker run --name mysql-db -e MYSQL_ROOT_PASSWORD=1234 -p 3306:3306 -d mysql:8.4
 - docker run -d --name redis -p 6379:6379 redis:7-alpine
 
+
 ## 프로젝트 기간
 - 2025.03.26 ~ 2025.06.05
 
+
+## 백엔드 흐름도
+<img src="image/백엔드%20흐름도.png"  width="700px">
+
 ----
+
+# 툴체인 & 프레임워크
 
 ## 프레임워크
 
@@ -33,9 +71,10 @@
 | **ORM**            | JPA (Hibernate)          | 객체-관계 매핑을 통해 DB와 연동                              |
 | **이메일 발송**      | Spring Mail              | 회원가입 환영 이메일 발송                                    |
 
----
+
 
 ## 툴체인
+
 
 | 분류           | 사용 기술                | 설명                                                         |
 |--------------|--------------------------|--------------------------------------------------------------|
@@ -51,7 +90,7 @@
 
 ---
 
-## 프로그램 구성
+# 프로그램 구성
 ```
 backend/
 └── src/
@@ -62,18 +101,24 @@ backend/
         │           └── final_backend/
         │               ├── config/
         │               │   ├── JwtConfig.java
+        │               │   ├── PurgoClientConfig.java
         │               │   ├── RedisConfig.java
-        │               │   └── SecurityConfig.java
+        │               │   ├── SecurityConfig.java
+        │               │   ├── SwaggerConfig.java
+        │               │   └── WebMvcConfig.java
         │               ├── controller/
         │               │   ├── AuthController.java
-        │               │   ├── UserController.java
+        │               │   ├── CommentController.java
         │               │   ├── PostController.java
-        │               │   └── CommentController.java
+        │               │   ├── SearchController.java
+        │               │   └── UserController.java
         │               ├── dto/
         │               │   ├── AuthDto.java
+        │               │   ├── CommentDto.java
         │               │   ├── JwtDto.java
         │               │   ├── PostDto.java
-        │               │   └── CommentDto.java
+        │               │   ├── UpdateProfileDto.java
+        │               │   └── UserProfileDto.java
         │               ├── entity/
         │               │   ├── BadwordLogEntity.java
         │               │   ├── CommentEntity.java
@@ -83,27 +128,30 @@ backend/
         │               │   └── UserLimitsEntity.java
         │               ├── repository/
         │               │   ├── AuthRepository.java
+        │               │   ├── BadwordLogRepository.java
+        │               │   ├── CommentRepository.java
+        │               │   ├── PenaltyCountRepository.java
         │               │   ├── PostRepository.java
-        │               │   └── CommentRepository.java
+        │               │   └── UserLimitsRepository.java
         │               ├── security/
         │               │   ├── CustomUserDetails.java
         │               │   └── JwtAuthorizationFilter.java
         │               └── service/
         │                   ├── AuthService.java
+        │                   ├── CommentService.java
         │                   ├── JwtService.java
+        │                   ├── PostService.java
         │                   ├── RedisService.java
         │                   ├── UserDetailsServiceImpl.java
-        │                   ├── UserService.java
-        │                   ├── PostService.java
-        │                   └── CommentService.java
+        │                   └── UserService.java
         └── resources/
-            └── application.properties
+            ├── application.properties
 ```
 
 
 ---
 
-## API
+# API
 ### Auth API
 
 | 메서드 | 엔드포인트              | 설명                          |
