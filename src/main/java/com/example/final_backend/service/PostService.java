@@ -32,30 +32,49 @@ public class PostService {
     private final RestTemplate purgoRestTemplate;
     private final BadwordLogRepository badwordLogRepository;
     private final UserService userService;
+    private final ServerToProxyJwtService serverToProxyJwtService;
+
 
     @Value("${proxy.server.url}")
     private String gatewayUrl;
+
+    @Value("${PURGO_CLIENT_API_KEY}")
+    private String clientApiKey;
+
 
     // 욕설 필터링 함수 (FastAPI 호출)
     private String getFilteredText(String text, UserEntity user, PostEntity post) {
         try {
             System.out.println("📤 FastAPI로 전송할 텍스트 (게시글): " + text);
 
+            // 1. 본문 데이터 준비
             Map<String, String> body = new HashMap<>();
             body.put("text", text);
 
+            // 2. JWT 생성 (서버-프록시용)
+            String jsonBody = serverToProxyJwtService.createJsonBody(body);
+            String serverJwt = serverToProxyJwtService.generateTokenFromJson(jsonBody);
+
+            // 3. 헤더 세팅
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, String>> entity = new HttpEntity<>(body, headers);
+
+            // API Key + JWT 둘 다 헤더에 추가
+            headers.set("Authorization", "Bearer " + clientApiKey);  // 클라이언트용 API Key
+            headers.set("X-Auth-Token", serverJwt);                  // 서버-프록시 JWT
+
+            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+            // 4. 프록시 서버 호출
             ResponseEntity<Map> response = purgoRestTemplate.postForEntity(gatewayUrl, entity, Map.class);
 
-
+            // 5. 응답 처리
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> result = response.getBody();
 
                 System.out.println("📦 FastAPI 응답 전체: " + result);
 
-                // final_decision 기준으로 판단
+                // final_decision 기준으로 판단 , 추출
                 Object decision = result.get("final_decision");
                 Boolean isAbusive = decision != null && decision.toString().equals("1");
 

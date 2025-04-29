@@ -39,6 +39,8 @@ dependencies {
     // JPA를 통한 ORM 기능 (Entity와 DB 간 자동 매핑)
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
+    // 서버 - 프록시 JWT 의존성
+    implementation 'commons-codec:commons-codec:1.15'
     // DB -----------
 
     // MySQL JDBC 드라이버
