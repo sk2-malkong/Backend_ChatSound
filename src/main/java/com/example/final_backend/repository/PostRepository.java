@@ -27,4 +27,8 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
 
     // orElseThrow() 사용 시 타입 오류 없이 PostEntity로 받을 수 있음
     Optional<PostEntity> findByPostId(int postId);
+
+    // 게시글(PostEntity)과 연결된 댓글(CommentEntity)의 개수를 함께 조회하여 페이지로 반환
+    @Query("SELECT p, COUNT(c) as commentCount FROM PostEntity p LEFT JOIN p.comment c GROUP BY p")
+    Page<Object[]> findAllWithCommentCount(Pageable pageable);
 }

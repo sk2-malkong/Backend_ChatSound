@@ -22,40 +22,51 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final AuthRepository authRepository;
     private final BadwordLogRepository badwordLogRepository;
     private final UserService userService;
     private final RestTemplate purgoRestTemplate;
+    private final ServerToProxyJwtService serverToProxyJwtService; // 🔧 서버 간 JWT 생성을 위한 서비스 추가
 
     @Value("${proxy.server.url}")
     private String gatewayUrl;
 
+    @Value("${PURGO_CLIENT_API_KEY}")
+    private String clientApiKey;
+
+    // 🔧 욕설 필터링 + 로그 저장 로직 (FastAPI 프록시 호출)
     private String refineIfNeeded(String text, UserEntity user, PostEntity post, CommentEntity comment) {
         try {
             Map<String, String> body = new HashMap<>();
             body.put("text", text);
 
+            // 🔧 JWT 생성
+            String jsonBody = serverToProxyJwtService.createJsonBody(body);
+            String serverJwt = serverToProxyJwtService.generateTokenFromJson(jsonBody);
+
+            // 🔧 헤더 설정
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, String>> entity = new HttpEntity<>(body, headers);
+            headers.set("Authorization", "Bearer " + clientApiKey); // 클라이언트 API Key
+            headers.set("X-Auth-Token", serverJwt);                 // 서버-프록시 JWT
 
-            ResponseEntity<Map<String, Object>> response = purgoRestTemplate.postForEntity(gatewayUrl, entity, (Class<Map<String, Object>>) (Class<?>) Map.class);
+            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+            ResponseEntity<Map<String, Object>> response = purgoRestTemplate.postForEntity(
+                    gatewayUrl, entity, (Class<Map<String, Object>>) (Class<?>) Map.class
+            );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> result = response.getBody();
-
-                System.out.println("📦 FastAPI 응답 전체: " + result);
 
                 Object decision = result.get("final_decision");
                 Boolean isAbusive = decision != null && decision.toString().equals("1");
 
                 Map<String, Object> resultInner = (Map<String, Object>) result.get("result");
                 String rewritten = resultInner != null ? (String) resultInner.get("rewritten_text") : text;
-
-                System.out.println("욕설 여부: " + isAbusive);
-                System.out.println("대체 문장: " + rewritten);
 
                 if (Boolean.TRUE.equals(isAbusive)) {
                     BadwordLogEntity log = new BadwordLogEntity();
@@ -78,6 +89,7 @@ public class CommentService {
         return text;
     }
 
+    // 댓글 조회
     public List<CommentDto.CommentResponse> getCommentsByPostId(int postId) {
         PostEntity post = postRepository.findByPostId(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -98,6 +110,7 @@ public class CommentService {
         return commentResponse;
     }
 
+    // 댓글 생성
     @Transactional
     public void createComment(String userId, int postId, CommentDto.CommentRequest commentRequest) {
         UserEntity user = authRepository.findById(userId).orElseThrow();
@@ -113,11 +126,13 @@ public class CommentService {
         comment.setContent(commentRequest.getContent());
         comment = commentRepository.save(comment);
 
+        // 🔧 댓글 내용 정제
         String refined = refineIfNeeded(commentRequest.getContent(), user, post, comment);
         comment.setContent(refined);
         commentRepository.save(comment);
     }
 
+    // 댓글 수정
     @Transactional
     public void updateComment(String userId, int commentId, CommentDto.CommentRequest commentRequest) {
         CommentEntity comment = commentRepository.findById(commentId)
@@ -128,7 +143,6 @@ public class CommentService {
         }
 
         UserEntity user = comment.getUser();
-
         userService.checkUserLimit(user);
 
         comment.setContent(commentRequest.getContent());
@@ -137,6 +151,7 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
+    // 댓글 삭제
     @Transactional
     public void deleteComment(String userId, int commentId) {
         CommentEntity comment = commentRepository.findById(commentId)

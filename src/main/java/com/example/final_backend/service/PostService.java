@@ -221,8 +221,23 @@ public class PostService {
 
     // 게시글 페이징 조회
     public Page<PostDto.Response> getPostsWithPaging(Pageable pageable) {
-        return postRepository.findAll(pageable)
-                .map(this::mapToDto);
+        Page<Object[]> result = postRepository.findAllWithCommentCount(pageable);
+        return result.map(obj -> {
+            PostEntity post = (PostEntity) obj[0];
+            Long commentCount = (Long) obj[1];
+
+            return PostDto.Response.builder()
+                    .postId(post.getPostId())
+                    .userId(post.getUser().getId())
+                    .username(post.getUser().getUsername())
+                    .title(post.getTitle())
+                    .content(post.getContent())
+                    .createdAt(post.getCreatedAt())
+                    .updatedAt(post.getUpdatedAt())
+                    .count(post.getCount())
+                    .commentCount(commentCount.intValue())
+                    .build();
+        });
     }
 
     // 게시글 검색
