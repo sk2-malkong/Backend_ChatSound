@@ -68,4 +68,10 @@ public class UserEntity{
     @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserLimitsEntity limits;
+
+    //BadwordLog 1대 양방향 연결
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<BadwordLogEntity> badwordLogs;
+
 }

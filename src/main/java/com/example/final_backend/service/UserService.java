@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -109,6 +110,21 @@ public class UserService {
             map.put("isActive", user.getLimits().getIsActive());
         } else {
             map.put("message", "제한 기록 없음");
+        }
+
+        // 비속어 로그 추가
+        if (user.getBadwordLogs() != null && !user.getBadwordLogs().isEmpty()) {
+            List<Map<String, String>> logs = user.getBadwordLogs().stream()
+                    .map(log -> {
+                        Map<String, String> entry = new HashMap<>();
+                        entry.put("originalWord", log.getOriginalWord());
+                        entry.put("filteredWord", log.getFilteredWord());
+                        return entry;
+                    })
+                    .toList();
+            map.put("badwordLogs", logs);
+        } else {
+            map.put("badwordLogs", List.of());
         }
 
         return map;
