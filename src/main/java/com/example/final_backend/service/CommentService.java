@@ -1,10 +1,7 @@
 package com.example.final_backend.service;
 
 import com.example.final_backend.dto.CommentDto;
-import com.example.final_backend.entity.BadwordLogEntity;
-import com.example.final_backend.entity.CommentEntity;
-import com.example.final_backend.entity.PostEntity;
-import com.example.final_backend.entity.UserEntity;
+import com.example.final_backend.entity.*;
 import com.example.final_backend.repository.AuthRepository;
 import com.example.final_backend.repository.BadwordLogRepository;
 import com.example.final_backend.repository.CommentRepository;
@@ -29,7 +26,7 @@ public class CommentService {
     private final BadwordLogRepository badwordLogRepository;
     private final UserService userService;
     private final RestTemplate purgoRestTemplate;
-    private final ServerToProxyJwtService serverToProxyJwtService; // 🔧 서버 간 JWT 생성을 위한 서비스 추가
+    private final ServerToProxyJwtService serverToProxyJwtService; // 서버 간 JWT 생성을 위한 서비스 추가
 
     @Value("${proxy.server.url}")
     private String gatewayUrl;
@@ -37,17 +34,17 @@ public class CommentService {
     @Value("${PURGO_CLIENT_API_KEY}")
     private String clientApiKey;
 
-    // 🔧 욕설 필터링 + 로그 저장 로직 (FastAPI 프록시 호출)
-    private String refineIfNeeded(String text, UserEntity user, PostEntity post, CommentEntity comment) {
+    // 욕설 필터링 + 로그 저장 로직 (FastAPI 프록시 호출)
+    private String getFilteredText(String text, UserEntity user, PostEntity post, CommentEntity comment) {
         try {
             Map<String, String> body = new HashMap<>();
             body.put("text", text);
 
-            // 🔧 JWT 생성
+            // JWT 생성
             String jsonBody = serverToProxyJwtService.createJsonBody(body);
             String serverJwt = serverToProxyJwtService.generateTokenFromJson(jsonBody);
 
-            // 🔧 헤더 설정
+            // 헤더 설정
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + clientApiKey); // 클라이언트 API Key
@@ -69,19 +66,21 @@ public class CommentService {
                 String rewritten = resultInner != null ? (String) resultInner.get("rewritten_text") : text;
 
                 if (Boolean.TRUE.equals(isAbusive)) {
-                    BadwordLogEntity log = new BadwordLogEntity();
-                    log.setUser(user);
-                    log.setPost(post);
-                    log.setComment(comment);
-                    log.setOriginalWord(text);
-                    log.setFilteredWord(rewritten);
-                    log.setCreatedAt(LocalDateTime.now());
-                    badwordLogRepository.save(log);
+                    if (comment != null) { // comment가 있을 때만 로그 저장
+                        BadwordLogEntity log = new BadwordLogEntity();
+                        log.setUser(user);
+                        log.setPost(post);
+                        log.setComment(comment);
+                        log.setOriginalWord(text);
+                        log.setFilteredWord(rewritten);
+                        log.setCreatedAt(LocalDateTime.now());
+                        badwordLogRepository.save(log);
+                    }
 
-                    userService.applyPenalty(user.getUserId());
-
+                    userService.applyPenalty(user.getUserId()); // 패널티는 항상 적용
                     return rewritten;
                 }
+
             }
         } catch (Exception e) {
             System.out.println("❌ 욕설 분석 실패: " + e.getMessage());
@@ -113,24 +112,37 @@ public class CommentService {
     // 댓글 생성
     @Transactional
     public void createComment(String userId, int postId, CommentDto.CommentRequest commentRequest) {
-        UserEntity user = authRepository.findById(userId).orElseThrow();
-        PostEntity post = postRepository.findById(postId).orElseThrow();
+        UserEntity user = authRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        userService.checkUserLimit(user);
+        // 제한된 사용자 차단
+        UserLimitsEntity limits = user.getLimits();
+        if (limits != null && Boolean.FALSE.equals(limits.getIsActive())) {
+            LocalDateTime now = LocalDateTime.now();
+            if (limits.getEndDate() != null && now.isBefore(limits.getEndDate())) {
+                throw new IllegalStateException("욕설 사용 5회로 24시간 동안 게시글 또는 댓글을 작성할 수 없습니다.");
+            }
+        }
 
+        // 댓글 엔티티 생성 및 저장 (commentId 확보용)
         CommentEntity comment = new CommentEntity();
         comment.setUser(user);
         comment.setPost(post);
         comment.setCreatedAt(LocalDateTime.now());
         comment.setUpdatedAt(LocalDateTime.now());
-        comment.setContent(commentRequest.getContent());
-        comment = commentRepository.save(comment);
+        comment.setContent("임시"); // placeholder
+        comment = commentRepository.save(comment); // save() 후 ID 생성됨
 
-        // 🔧 댓글 내용 정제
-        String refined = refineIfNeeded(commentRequest.getContent(), user, post, comment);
+        // 3욕설 필터링 + 로그 저장 (이제 comment를 넘길 수 있음)
+        String refined = getFilteredText(commentRequest.getContent(), user, post, comment);
         comment.setContent(refined);
+
+        // 최종 저장
         commentRepository.save(comment);
     }
+
 
     // 댓글 수정
     @Transactional
@@ -138,18 +150,34 @@ public class CommentService {
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
+        // 사용자 권한 확인
         if (!comment.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
         }
 
         UserEntity user = comment.getUser();
-        userService.checkUserLimit(user);
 
-        comment.setContent(commentRequest.getContent());
+        // 제한된 사용자일 경우 수정 금지
+        UserLimitsEntity limits = user.getLimits();
+        if (limits != null && Boolean.FALSE.equals(limits.getIsActive())) {
+            LocalDateTime now = LocalDateTime.now();
+            if (limits.getEndDate() != null && now.isBefore(limits.getEndDate())) {
+                throw new IllegalStateException("욕설 사용 5회로 24시간 동안 게시글 또는 댓글을 작성할 수 없습니다.");
+            }
+        }
+
+        // 욕설 필터링 (comment 넘겨서 BadwordLog 기록 가능)
+        PostEntity post = comment.getPost(); // 댓글에 연결된 게시글 정보 가져오기
+        String refined = getFilteredText(commentRequest.getContent(), user, post, comment);
+
+        // 내용 수정
+        comment.setContent(refined);
         comment.setUpdatedAt(LocalDateTime.now());
 
+        // 최종 저장
         commentRepository.save(comment);
     }
+
 
     // 댓글 삭제
     @Transactional

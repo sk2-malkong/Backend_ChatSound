@@ -66,7 +66,7 @@ public class UserEntity{
 
     // 제한된 사용자 1대1 양방향 연결
     @JsonManagedReference
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private UserLimitsEntity limits;
 
     //BadwordLog 1대 양방향 연결

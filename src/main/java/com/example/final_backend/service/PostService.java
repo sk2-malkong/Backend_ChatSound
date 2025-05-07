@@ -66,7 +66,8 @@ public class PostService {
             HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
             // 4. 프록시 서버 호출
-            ResponseEntity<Map> response = purgoRestTemplate.postForEntity(gatewayUrl, entity, Map.class);
+            ResponseEntity<Map> response = purgoRestTemplate.postForEntity(
+                    gatewayUrl, entity, Map.class);
 
             // 5. 응답 처리
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
