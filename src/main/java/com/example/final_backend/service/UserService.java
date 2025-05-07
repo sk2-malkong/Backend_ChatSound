@@ -114,11 +114,12 @@ public class UserService {
 
         // 비속어 로그 추가
         if (user.getBadwordLogs() != null && !user.getBadwordLogs().isEmpty()) {
-            List<Map<String, String>> logs = user.getBadwordLogs().stream()
+            List<Map<String, Object>> logs = user.getBadwordLogs().stream()
                     .map(log -> {
-                        Map<String, String> entry = new HashMap<>();
+                        Map<String, Object> entry = new HashMap<>();
                         entry.put("originalWord", log.getOriginalWord());
                         entry.put("filteredWord", log.getFilteredWord());
+                        entry.put("createdAt", log.getCreatedAt());
                         return entry;
                     })
                     .toList();
@@ -126,7 +127,6 @@ public class UserService {
         } else {
             map.put("badwordLogs", List.of());
         }
-
         return map;
     }
 
