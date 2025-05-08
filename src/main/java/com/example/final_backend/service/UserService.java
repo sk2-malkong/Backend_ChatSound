@@ -2,6 +2,7 @@ package com.example.final_backend.service;
 
 import com.example.final_backend.dto.UpdateProfileDto;
 import com.example.final_backend.dto.UserProfileDto;
+import com.example.final_backend.entity.BadwordLogEntity;
 import com.example.final_backend.entity.PenaltyCountEntity;
 import com.example.final_backend.entity.UserEntity;
 import com.example.final_backend.entity.UserLimitsEntity;
@@ -12,11 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.List;
-
+import java.util.*;
 import java.time.LocalDate;
-import java.util.Map;
-import java.util.HashMap;
 import java.time.LocalDateTime;
 import java.io.File;
 import java.io.IOException;
@@ -112,21 +110,55 @@ public class UserService {
             map.put("message", "제한 기록 없음");
         }
 
-        // 비속어 로그 추가
-        if (user.getBadwordLogs() != null && !user.getBadwordLogs().isEmpty()) {
-            List<Map<String, Object>> logs = user.getBadwordLogs().stream()
+        List<BadwordLogEntity> logsRaw = user.getBadwordLogs();
+
+        // 욕설 로그가 존재하면
+        if (logsRaw != null && !logsRaw.isEmpty()) {
+            // 개별 욕설 로그를 Map 형태로 변환하여 리스트에 저장
+            List<Map<String, Object>> logs = logsRaw.stream()
                     .map(log -> {
                         Map<String, Object> entry = new HashMap<>();
-                        entry.put("originalWord", log.getOriginalWord());
-                        entry.put("filteredWord", log.getFilteredWord());
-                        entry.put("createdAt", log.getCreatedAt());
+                        entry.put("originalWord", log.getOriginalWord()); // 원래 욕설
+                        entry.put("filteredWord", log.getFilteredWord()); // 필터링된 욕설
+                        entry.put("createdAt", log.getCreatedAt()); // 발생 시각
                         return entry;
                     })
                     .toList();
-            map.put("badwordLogs", logs);
+            map.put("badwordLogs", logs); // 변환된 로그 리스트 추가
+
+            List<Map<String, Object>> logGroups = new ArrayList<>();
+
+            // 5개씩 로그를 묶어서 그룹화
+            for (int i = 0; i + 4 < logsRaw.size(); i += 5) {
+                List<Map<String, Object>> groupLogs = new ArrayList<>();
+                for (int j = i; j < i + 5; j++) {
+                    BadwordLogEntity log = logsRaw.get(j);
+                    Map<String, Object> logMap = new HashMap<>();
+                    logMap.put("originalWord", log.getOriginalWord());
+                    logMap.put("filteredWord", log.getFilteredWord());
+                    logMap.put("createdAt", log.getCreatedAt());
+                    groupLogs.add(logMap);
+                }
+                // 그룹의 시작 시각과 제한 종료 시각 계산 (5개 묶인 마지막 로그 시점 기준 + 3분)
+                LocalDateTime start = logsRaw.get(i + 4).getCreatedAt();
+                LocalDateTime end = start.plusMinutes(3); //배포시 제한 시간 확인 후, 수정필요
+
+                // 하나의 그룹 정보 저장
+                Map<String, Object> group = new HashMap<>();
+                group.put("startDate", start); // 제한 시작 시각
+                group.put("endDate", end);  // 제한 종료 시각
+                group.put("logs", groupLogs);  // 묶인 로그들
+
+                logGroups.add(group); // 그룹 리스트에 추가
+            }
+            // 그룹화된 로그 추가
+            map.put("logGroups", logGroups);
         } else {
+            // 욕설 로그가 없을 경우 빈 리스트 처리
             map.put("badwordLogs", List.of());
+            map.put("logGroups", List.of());
         }
+
         return map;
     }
 
@@ -194,6 +226,4 @@ public class UserService {
             throw new IllegalStateException("욕설 사용 5회로 24시간 동안 게시글 또는 댓글을 작성할 수 없습니다.");
         }
     }
-
-
 }
