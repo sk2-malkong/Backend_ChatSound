@@ -97,6 +97,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/comment/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/comment/**").authenticated()
 
+                        // 비속어 횟수 조회 인증 경로
+                        .requestMatchers(HttpMethod.GET, "/api/user/penalty").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
