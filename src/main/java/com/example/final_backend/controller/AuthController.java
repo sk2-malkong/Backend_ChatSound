@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -38,18 +39,27 @@ public class AuthController {
     @Operation(summary = "로그인", description = "회원 정보를 받아 로그인을 진행하고 로그인 성공 시 토큰을 발급합니다.")
     @ApiResponse(responseCode = "200", description = "로그인 성공")
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody JwtDto.LoginRequest loginRequest) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody JwtDto.LoginRequest loginRequest) {
         try {
             JwtDto.TokenResponse response = authService.login(loginRequest);
+
+            // 응답 바디에는 필요한 최소 정보만 전달 (isActive)
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "로그인 성공");
+            body.put("endDate", response.getEndDate());
+            body.put("penaltyCount", response.getPenaltyCount());
 
             return ResponseEntity.ok()
                     .header("Authorization", "Bearer " + response.getAccessToken())
                     .header("Refresh-Token", response.getRefreshToken())
-                    .body("로그인 성공");
+                    .body(body);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("로그인 실패");
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "로그인 실패");
+            return ResponseEntity.badRequest().body(error);
         }
     }
+
 
     // Access 토큰 재발급(백엔드 테스트용)
     @Operation(summary = "토큰 재발급", description = "Refresh Token을 받아 인가 확인 후 토큰을 재발급합니다.")

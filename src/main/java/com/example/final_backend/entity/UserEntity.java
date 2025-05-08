@@ -73,5 +73,4 @@ public class UserEntity{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<BadwordLogEntity> badwordLogs;
-
 }

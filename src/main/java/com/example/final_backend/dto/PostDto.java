@@ -1,9 +1,6 @@
 package com.example.final_backend.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +31,10 @@ public class PostDto {
         // String image;
         private int count;          // 조회수
         private int commentCount;   // 해당 게시글에 달린 댓글 수
+
+        // 프론트 전달용 데이터
+        private LocalDateTime endDate;  // 제한 끝나는 시간
+        private int penaltyCount;       // 패널티 횟수
     }
 
     @Data
@@ -43,4 +44,5 @@ public class PostDto {
     public static class SearchRequest {
         private String keyword;
     }
+
 }

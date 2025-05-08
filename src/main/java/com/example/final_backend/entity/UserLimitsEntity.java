@@ -1,9 +1,7 @@
 package com.example.final_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 
 import java.time.LocalDateTime;
@@ -16,7 +14,8 @@ import java.time.LocalDateTime;
 @Table(name="limits")
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 public class UserLimitsEntity {
     // 제한된 사용자
     @Id

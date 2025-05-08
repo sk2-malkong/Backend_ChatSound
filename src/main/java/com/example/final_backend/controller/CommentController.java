@@ -32,13 +32,13 @@ public class CommentController {
     @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 작성되었습니다.")
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{postId}")
-    public ResponseEntity<String> createComment(
+    public ResponseEntity<CommentDto.CommentResponse> createComment(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable int postId,
             @RequestBody CommentDto.CommentRequest commentRequest
     ) {
-        commentService.createComment(userDetails.getId(), postId, commentRequest);
-        return ResponseEntity.ok("댓글이 성공적으로 작성되었습니다.");
+        CommentDto.CommentResponse response = commentService.createComment(userDetails.getId(), postId, commentRequest);
+        return ResponseEntity.ok(response);
     }
 
     // 댓글 수정
@@ -46,13 +46,13 @@ public class CommentController {
     @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 수정되었습니다.")
     @SecurityRequirement(name = "bearerAuth")
     @PutMapping("/{commentId}")
-    public ResponseEntity<String> updateComment(
+    public ResponseEntity<CommentDto.CommentResponse> updateComment(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable int commentId,
             @RequestBody CommentDto.CommentRequest commentRequest
     ) {
-        commentService.updateComment(userDetails.getId(), commentId, commentRequest);
-        return ResponseEntity.ok("댓글이 성공적으로 수정되었습니다.");
+        CommentDto.CommentResponse response = commentService.updateComment(userDetails.getId(), commentId, commentRequest);
+        return ResponseEntity.ok(response);
     }
 
     // 댓글 삭제

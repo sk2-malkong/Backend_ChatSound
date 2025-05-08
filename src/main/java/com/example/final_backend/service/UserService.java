@@ -164,8 +164,8 @@ public class UserService {
 
             limits.setIsActive(false);
             limits.setStartDate(LocalDateTime.now());
-            limits.setEndDate(LocalDateTime.now().plusHours(24));   // 24시간 제한
-            //limits.setEndDate(now.plusMinutes(3));    // 코드 확인용 5분
+            //limits.setEndDate(LocalDateTime.now().plusHours(24));   // 24시간 제한
+            limits.setEndDate(now.plusMinutes(3));    // 코드 확인용 5분
 
 
             userLimitsRepository.save(limits);

@@ -109,22 +109,16 @@ public class CommentService {
         return commentResponse;
     }
 
-    // 댓글 생성
+    // 댓글 작성
     @Transactional
-    public void createComment(String userId, int postId, CommentDto.CommentRequest commentRequest) {
+    public CommentDto.CommentResponse createComment(String userId, int postId, CommentDto.CommentRequest commentRequest) {
         UserEntity user = authRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        // 제한된 사용자 차단
-        UserLimitsEntity limits = user.getLimits();
-        if (limits != null && Boolean.FALSE.equals(limits.getIsActive())) {
-            LocalDateTime now = LocalDateTime.now();
-            if (limits.getEndDate() != null && now.isBefore(limits.getEndDate())) {
-                throw new IllegalStateException("욕설 사용 5회로 24시간 동안 게시글 또는 댓글을 작성할 수 없습니다.");
-            }
-        }
+        // 사용자 제한 여부 확인
+        userService.checkUserLimit(user);
 
         // 댓글 엔티티 생성 및 저장 (commentId 확보용)
         CommentEntity comment = new CommentEntity();
@@ -141,41 +135,86 @@ public class CommentService {
 
         // 최종 저장
         commentRepository.save(comment);
+
+        /*
+        프론트에서 사용자 횟수 제한 시 화면에서도 제한을 하기 위해 필요한 데이터 값
+        penaltyCount, endDate 를 전달
+         */
+
+        // 제한 종료시간 추출
+        LocalDateTime endDate = null;
+        if (user.getLimits() != null) {
+            endDate = user.getLimits().getEndDate();
+        }
+
+        // 패널티 횟수 추출
+        int penaltyCount = 0;
+        if (user.getPenaltyCount() != null) {
+            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        }
+
+        return CommentDto.CommentResponse.builder()
+                .commentId(comment.getCommentId())
+                .userId(comment.getUser().getId())
+                .username(comment.getUser().getUsername())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                // 프론트 전달용 데이터
+                .penaltyCount(penaltyCount)
+                .endDate(endDate)
+                .build();
     }
 
 
     // 댓글 수정
     @Transactional
-    public void updateComment(String userId, int commentId, CommentDto.CommentRequest commentRequest) {
+    public CommentDto.CommentResponse updateComment(String userId, int commentId, CommentDto.CommentRequest commentRequest) {
         CommentEntity comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
-        // 사용자 권한 확인
         if (!comment.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("댓글 수정 권한이 없습니다.");
         }
 
         UserEntity user = comment.getUser();
+        PostEntity post = comment.getPost();
 
-        // 제한된 사용자일 경우 수정 금지
-        UserLimitsEntity limits = user.getLimits();
-        if (limits != null && Boolean.FALSE.equals(limits.getIsActive())) {
-            LocalDateTime now = LocalDateTime.now();
-            if (limits.getEndDate() != null && now.isBefore(limits.getEndDate())) {
-                throw new IllegalStateException("욕설 사용 5회로 24시간 동안 게시글 또는 댓글을 작성할 수 없습니다.");
-            }
-        }
+        // 사용자 제한 여부 확인
+        userService.checkUserLimit(user);
 
-        // 욕설 필터링 (comment 넘겨서 BadwordLog 기록 가능)
-        PostEntity post = comment.getPost(); // 댓글에 연결된 게시글 정보 가져오기
+        // 욕설 필터링 + 로그 저장 + 패널티 적용
         String refined = getFilteredText(commentRequest.getContent(), user, post, comment);
 
-        // 내용 수정
+        // 내용 반영
         comment.setContent(refined);
         comment.setUpdatedAt(LocalDateTime.now());
 
-        // 최종 저장
         commentRepository.save(comment);
+
+        // endDate 추출
+        LocalDateTime endDate = null;
+        if (user.getLimits() != null) {
+            endDate = user.getLimits().getEndDate();
+        }
+
+        // penaltyCount 추출
+        int penaltyCount = 0;
+        if (user.getPenaltyCount() != null) {
+            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        }
+
+        return CommentDto.CommentResponse.builder()
+                .commentId(comment.getCommentId())
+                .userId(comment.getUser().getId())
+                .username(comment.getUser().getUsername())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                // 프론트 전달용 데이터
+                .penaltyCount(penaltyCount)
+                .endDate(endDate)
+                .build();
     }
 
 

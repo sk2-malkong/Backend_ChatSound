@@ -6,6 +6,7 @@ import com.example.final_backend.dto.PostDto;
 import com.example.final_backend.entity.PostEntity;
 import com.example.final_backend.entity.UserEntity;
 import com.example.final_backend.repository.BadwordLogRepository;
+import com.example.final_backend.repository.CommentRepository;
 import com.example.final_backend.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class PostService {
     private final BadwordLogRepository badwordLogRepository;
     private final UserService userService;
     private final ServerToProxyJwtService serverToProxyJwtService;
+    private final CommentRepository commentRepository;
 
 
     @Value("${proxy.server.url}")
@@ -111,11 +113,13 @@ public class PostService {
     // 게시글 작성
     @Transactional
     public PostDto.Response createPost(String userId, PostDto.Request request) {
-        UserEntity user = authRepository.findById(userId).orElseThrow();
+        UserEntity user = authRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자 없음"));
 
-        // 제한 여부 확인
+        // 사용자 제한 여부 확인
         userService.checkUserLimit(user);
 
+        // 게시글 생성
         PostEntity post = new PostEntity();
         post.setUser(user);
         post.setCreatedAt(LocalDateTime.now());
@@ -124,14 +128,51 @@ public class PostService {
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
 
-        // 우선 저장 후 postId 생성
         PostEntity saved = postRepository.save(post);
 
-        // 제목과 내용 욕설 감지 및 로그 저장
+        // 필터링 적용
         saved.setTitle(getFilteredText(request.getTitle(), user, saved));
         saved.setContent(getFilteredText(request.getContent(), user, saved));
-        return mapToDto(postRepository.save(saved));
+        PostEntity updated = postRepository.save(saved);
+
+        /*
+        프론트에서 사용자 횟수 제한 시 화면에서도 제한을 하기 위해 필요한 데이터 값
+        penaltyCount, endDate 를 전달
+         */
+
+        // 제한 종료시간 추출
+        LocalDateTime endDate = null;
+        if (user.getLimits() != null) {
+            endDate = user.getLimits().getEndDate();
+        }
+
+        // 패널티 횟수 추출
+        int penaltyCount = 0;
+        if (user.getPenaltyCount() != null) {
+            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        }
+
+        // 댓글 수 계산
+        int commentCount = commentRepository.countByPost(updated);
+
+        return PostDto.Response.builder()
+                .postId(updated.getPostId())
+                .userId(user.getId())
+                .username(user.getUsername())
+                .title(updated.getTitle())
+                .content(updated.getContent())
+                .createdAt(updated.getCreatedAt())
+                .updatedAt(updated.getUpdatedAt())
+                .count(updated.getCount())
+                .commentCount(commentCount)
+
+                // 프론트 전달용 데이터 반환
+                .endDate(endDate)
+                .penaltyCount(penaltyCount)
+                .build();
     }
+
+
 
     // 게시글 목록 조회
     public List<PostDto.Response> getAllPosts() {
@@ -174,22 +215,50 @@ public class PostService {
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다: " + postId));
 
+        UserEntity user = post.getUser();
+
+        // 사용자 제한 여부 확인
+        userService.checkUserLimit(user);
+
         // 작성자 확인
         if (!post.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("게시글 수정 권한이 없습니다.");
         }
-
-        UserEntity user = post.getUser();
-
-        // 제한 여부 확인
-        userService.checkUserLimit(user);
 
         post.setTitle(getFilteredText(request.getTitle(), user, post));
         post.setContent(getFilteredText(request.getContent(), user, post));
         post.setUpdatedAt(LocalDateTime.now());
 
         PostEntity updatedPost = postRepository.save(post);
-        return mapToDto(updatedPost);
+
+        // endDate 추출
+        LocalDateTime endDate = null;
+        if (user.getLimits() != null) {
+            endDate = user.getLimits().getEndDate();
+        }
+
+        // penaltyCount 추출
+        int penaltyCount = 0;
+        if (user.getPenaltyCount() != null) {
+            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        }
+
+        // 댓글 수 계산
+        int commentCount = commentRepository.countByPost(updatedPost);
+
+        return PostDto.Response.builder()
+                .postId(updatedPost.getPostId())
+                .userId(user.getId())
+                .username(user.getUsername())
+                .title(updatedPost.getTitle())
+                .content(updatedPost.getContent())
+                .createdAt(updatedPost.getCreatedAt())
+                .updatedAt(updatedPost.getUpdatedAt())
+                .count(updatedPost.getCount())
+                .commentCount(commentCount)
+                .endDate(endDate)
+                .penaltyCount(penaltyCount)
+                .build();
     }
 
     // 게시글 삭제

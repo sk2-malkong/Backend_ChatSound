@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 /**
  * 로그인 / 토큰 재발급 등에 사용하는 DTO 모음
  */
@@ -32,9 +34,13 @@ public class JwtDto {
         private String tokenType;
         private String id;
         private String username;
+
+        // 프론트 전달용 데이터
+        private LocalDateTime endDate; // endDate 전달
+        private int penaltyCount; // penaltyCount 전달
     }
 
-    // 토큰 재발급 요청청
+    // 토큰 재발급 요청
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
