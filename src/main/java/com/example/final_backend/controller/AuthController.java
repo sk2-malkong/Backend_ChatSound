@@ -47,7 +47,7 @@ public class AuthController {
             Map<String, Object> body = new HashMap<>();
             body.put("message", "로그인 성공");
             body.put("endDate", response.getEndDate());
-            body.put("penaltyCount", response.getPenaltyCount());
+            body.put("isActive", response.getIsActive());
 
             return ResponseEntity.ok()
                     .header("Authorization", "Bearer " + response.getAccessToken())

@@ -35,6 +35,18 @@ public class UserService {
         UserEntity user = authRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
 
+        // 제한 종료시간 추출
+        LocalDateTime endDate = null;
+        if (user.getLimits() != null) {
+            endDate = user.getLimits().getEndDate();
+        }
+
+        // 패널티 횟수 추출
+        Boolean isActive = true;
+        if (user.getLimits() != null) {
+            isActive = user.getLimits().getIsActive();
+        }
+
         UserProfileDto dto = new UserProfileDto();
         dto.setUserId(user.getUserId());
         dto.setId(user.getId());
@@ -43,6 +55,8 @@ public class UserService {
         dto.setProfileImage(user.getProfileImage());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setEndDate(endDate);
+        dto.setIsActive(isActive);
 
         return dto;
     }

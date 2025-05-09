@@ -34,7 +34,7 @@ public class PostDto {
 
         // 프론트 전달용 데이터
         private LocalDateTime endDate;  // 제한 끝나는 시간
-        private int penaltyCount;       // 패널티 횟수
+        private Boolean isActive;       // 사용자 활동 여부
     }
 
     @Data

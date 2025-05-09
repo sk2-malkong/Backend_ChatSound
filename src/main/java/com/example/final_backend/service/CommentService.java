@@ -148,9 +148,9 @@ public class CommentService {
         }
 
         // 패널티 횟수 추출
-        int penaltyCount = 0;
-        if (user.getPenaltyCount() != null) {
-            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        Boolean isActive = true;
+        if (user.getLimits() != null) {
+            isActive = user.getLimits().getIsActive();
         }
 
         return CommentDto.CommentResponse.builder()
@@ -161,7 +161,7 @@ public class CommentService {
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 // 프론트 전달용 데이터
-                .penaltyCount(penaltyCount)
+                .isActive(isActive)
                 .endDate(endDate)
                 .build();
     }
@@ -198,10 +198,10 @@ public class CommentService {
             endDate = user.getLimits().getEndDate();
         }
 
-        // penaltyCount 추출
-        int penaltyCount = 0;
-        if (user.getPenaltyCount() != null) {
-            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        // 패널티 횟수 추출
+        Boolean isActive = true;
+        if (user.getLimits() != null) {
+            isActive = user.getLimits().getIsActive();
         }
 
         return CommentDto.CommentResponse.builder()
@@ -212,7 +212,7 @@ public class CommentService {
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 // 프론트 전달용 데이터
-                .penaltyCount(penaltyCount)
+                .isActive(isActive)
                 .endDate(endDate)
                 .build();
     }

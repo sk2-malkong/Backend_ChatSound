@@ -147,13 +147,11 @@ public class PostService {
         }
 
         // 패널티 횟수 추출
-        int penaltyCount = 0;
-        if (user.getPenaltyCount() != null) {
-            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        Boolean isActive = true;
+        if (user.getLimits() != null) {
+            isActive = user.getLimits().getIsActive();
         }
 
-        // 댓글 수 계산
-        int commentCount = commentRepository.countByPost(updated);
 
         return PostDto.Response.builder()
                 .postId(updated.getPostId())
@@ -164,11 +162,10 @@ public class PostService {
                 .createdAt(updated.getCreatedAt())
                 .updatedAt(updated.getUpdatedAt())
                 .count(updated.getCount())
-                .commentCount(commentCount)
 
                 // 프론트 전달용 데이터 반환
                 .endDate(endDate)
-                .penaltyCount(penaltyCount)
+                .isActive(isActive)
                 .build();
     }
 
@@ -237,14 +234,11 @@ public class PostService {
             endDate = user.getLimits().getEndDate();
         }
 
-        // penaltyCount 추출
-        int penaltyCount = 0;
-        if (user.getPenaltyCount() != null) {
-            penaltyCount = user.getPenaltyCount().getPenaltyCount();
+        // 패널티 횟수 추출
+        Boolean isActive = true;
+        if (user.getLimits() != null) {
+            isActive = user.getLimits().getIsActive();
         }
-
-        // 댓글 수 계산
-        int commentCount = commentRepository.countByPost(updatedPost);
 
         return PostDto.Response.builder()
                 .postId(updatedPost.getPostId())
@@ -255,9 +249,9 @@ public class PostService {
                 .createdAt(updatedPost.getCreatedAt())
                 .updatedAt(updatedPost.getUpdatedAt())
                 .count(updatedPost.getCount())
-                .commentCount(commentCount)
+                // 프론트 전달용 데이터
                 .endDate(endDate)
-                .penaltyCount(penaltyCount)
+                .isActive(isActive)
                 .build();
     }
 

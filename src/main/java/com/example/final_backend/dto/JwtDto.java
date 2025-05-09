@@ -36,8 +36,8 @@ public class JwtDto {
         private String username;
 
         // 프론트 전달용 데이터
-        private LocalDateTime endDate; // endDate 전달
-        private int penaltyCount; // penaltyCount 전달
+        private LocalDateTime endDate;  // endDate 전달
+        private Boolean isActive;       // 사용자 활동 여부
     }
 
     // 토큰 재발급 요청

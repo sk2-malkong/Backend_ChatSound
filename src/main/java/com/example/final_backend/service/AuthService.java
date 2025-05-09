@@ -11,8 +11,6 @@ import com.example.final_backend.repository.UserLimitsRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -104,13 +102,6 @@ public class AuthService {
         //결국 authentication는 사용자가 입력한 id/pw로 인증 시도하고
         //그 결과로 인증 성공 여부,사용자 정보,권한이 담긴 Authentication를 반환 받는것이 목적
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getId(),
-                            loginRequest.getPw()
-                    )
-            );
-
             UserEntity user = authRepository.findById(loginRequest.getId())
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
@@ -118,8 +109,8 @@ public class AuthService {
             UserLimitsEntity limit = userLimitsRepository.findByUserId(user.getUserId()).orElse(null);
             LocalDateTime endDate = (limit != null) ? limit.getEndDate() : null;
 
-            PenaltyCountEntity penaltyCountEntity = penaltyCountRepository.findByUserId(user.getUserId()).orElse(null);
-            int penaltyCount = penaltyCountEntity.getPenaltyCount();
+            UserLimitsEntity userLimitsEntity = userLimitsRepository.findByUserId(user.getUserId()).orElse(null);
+            Boolean isActive = userLimitsEntity.getIsActive();
 
             String accessToken = jwtService.generateAccessToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
@@ -131,7 +122,7 @@ public class AuthService {
                     .username(user.getUsername())
                     .tokenType("Bearer")
                     .endDate(endDate)
-                    .penaltyCount(penaltyCount)
+                    .isActive(isActive)
                     .build();
 
         } catch (AuthenticationException e) {
