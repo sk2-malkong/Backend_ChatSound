@@ -39,9 +39,9 @@ public class AuthController {
     @Operation(summary = "로그인", description = "회원 정보를 받아 로그인을 진행하고 로그인 성공 시 토큰을 발급합니다.")
     @ApiResponse(responseCode = "200", description = "로그인 성공")
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody JwtDto.LoginRequest loginRequest) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody AuthDto.LoginRequest loginRequest) {
         try {
-            JwtDto.TokenResponse response = authService.login(loginRequest);
+            AuthDto.LoginResponse response = authService.login(loginRequest);
 
             // 응답 바디에는 필요한 최소 정보만 전달 (isActive)
             Map<String, Object> body = new HashMap<>();
@@ -65,9 +65,9 @@ public class AuthController {
     @Operation(summary = "토큰 재발급", description = "Refresh Token을 받아 인가 확인 후 토큰을 재발급합니다.")
     @ApiResponse(responseCode = "200", description = "토큰 재발급 성공")
     @PostMapping("/refresh")
-    public ResponseEntity<String> refreshToken(@RequestBody JwtDto.RefreshTokenRequest request) {
+    public ResponseEntity<String> updateToken(@RequestBody JwtDto.RefreshTokenRequest request) {
         try {
-            JwtDto.TokenResponse response = authService.refreshToken(request.getRefreshToken());
+            JwtDto.TokenResponse response = authService.updateToken(request.getRefreshToken());
 
             return ResponseEntity.ok()
                     .header("Access-Token", "Bearer " + response.getAccessToken())

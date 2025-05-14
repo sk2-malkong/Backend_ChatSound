@@ -51,4 +51,18 @@ public class PostEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private List<CommentEntity> comment;
 
+    // 게시물 댓글 수
+    @Transient // JPA가 DB 컬럼으로 인식하지 않음
+    private int commentCount;
+
+    public static PostEntity create(UserEntity user, String title, String content) {
+        PostEntity post = new PostEntity();
+        post.setUser(user);
+        post.setTitle(title);
+        post.setContent(content);
+        post.setCount(0);
+        post.setCreatedAt(LocalDateTime.now());
+        post.setUpdatedAt(LocalDateTime.now());
+        return post;
+    }
 }

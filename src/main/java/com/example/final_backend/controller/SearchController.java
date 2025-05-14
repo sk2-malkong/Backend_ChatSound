@@ -15,6 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * /api/search로 시작하는 검색 관련 REST API 제공하는 컨트롤러
+ */
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/search")
@@ -28,7 +32,7 @@ public class SearchController {
     )
     @ApiResponse(responseCode = "200", description = "검색된 게시글 목록이 성공적으로 반환됩니다.")
     @GetMapping
-    public ResponseEntity<Page<PostDto.Response>> searchPosts(
+    public ResponseEntity<Page<PostDto.CheckPostResponse>> searchPosts(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
@@ -39,7 +43,7 @@ public class SearchController {
                 Sort.Direction.ASC : Sort.Direction.DESC;
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-        Page<PostDto.Response> results = postService.searchPosts(keyword, pageable);
+        Page<PostDto.CheckPostResponse> results = postService.searchPosts(keyword, pageable);
 
         return ResponseEntity.ok(results);
     }

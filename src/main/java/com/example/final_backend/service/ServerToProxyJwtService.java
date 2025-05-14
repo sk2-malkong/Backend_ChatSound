@@ -17,6 +17,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 커뮤니티 서버에서 프록시 서버로 요청을 보낼 때 사용하는 JWT 기반 인증 토큰 생성 전용 서비스
+ * - 욕설 필터링 API와 통신할 때 사용
+ */
+
 @Service
 @RequiredArgsConstructor
 public class ServerToProxyJwtService {
@@ -34,7 +39,7 @@ public class ServerToProxyJwtService {
         this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes());
     }
 
-    // ① JSON 문자열 만드는 메서드
+    // JSON 문자열 만드는 메서드
     public String createJsonBody(Map<String, String> requestBodyMap) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
@@ -43,7 +48,7 @@ public class ServerToProxyJwtService {
         return mapper.writeValueAsString(requestBodyMap);
     }
 
-    // ② JSON 문자열을 받아서 JWT를 생성하는 메서드
+    // JSON 문자열을 받아서 JWT를 생성하는 메서드
     public String generateTokenFromJson(String jsonBody) {
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);

@@ -6,6 +6,12 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+/**
+ * 이메일 전송 작업 비동기 처리
+ * - 회원가입 시 환영 이메일 비동기로 발송
+ * - @Async 어노테이션을 통해 별도 스레드에서 처리하도록 함
+ */
+
 @Service
 @RequiredArgsConstructor
 public class AsyncService {

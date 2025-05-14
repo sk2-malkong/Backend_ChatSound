@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 @EnableJpaRepositories(basePackages = "com.example.final_backend.repository")
-public interface AuthRepository extends JpaRepository<UserEntity, Integer> {
+public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     Optional<UserEntity> findByEmail(String email);
     Optional<UserEntity> findById(String id);
     Optional<UserEntity> findByUsername(String username);

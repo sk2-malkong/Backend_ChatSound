@@ -1,27 +1,16 @@
 package com.example.final_backend.dto;
 
+import com.example.final_backend.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 /**
- * 로그인 / 토큰 재발급 등에 사용하는 DTO 모음
+ * 토큰 발급 관련 DTO 모음
  */
 
 public class JwtDto {
-
-    // 로그인 요청
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class LoginRequest {
-        private String id;
-        private String pw;
-    }
 
     // JWT 응답 (Access, Refresh)
     @Data
@@ -33,11 +22,16 @@ public class JwtDto {
         private String refreshToken;
         private String tokenType;
         private String id;
-        private String username;
 
-        // 프론트 전달용 데이터
-        private LocalDateTime endDate;  // endDate 전달
-        private Boolean isActive;       // 사용자 활동 여부
+        // 정적 팩토리 메서드 추가
+        public static TokenResponse of(UserEntity user, String accessToken, String refreshToken) {
+            return TokenResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .tokenType("Bearer")
+                    .id(user.getId())
+                    .build();
+        }
     }
 
     // 토큰 재발급 요청

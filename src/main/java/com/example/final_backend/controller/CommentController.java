@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * /api/comment로 시작하는 댓글 관련 REST API 제공하는 컨트롤러
+ */
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/comment")
@@ -23,7 +27,7 @@ public class CommentController {
     @Operation(summary = "댓글 목록 조회", description = "특정 게시글에 작성된 모든 댓글을 조회합니다.")
     @ApiResponse(responseCode = "200", description = "댓글 목록이 성공적으로 반환됩니다.")
     @GetMapping("/{postId}")
-    public ResponseEntity<List<CommentDto.CommentResponse>> getCommentsByPostId(@PathVariable int postId) {
+    public ResponseEntity<List<CommentDto.CheckCommentResponse>> getCommentsByPostId(@PathVariable int postId) {
         return ResponseEntity.ok(commentService.getCommentsByPostId(postId));
     }
 
@@ -32,12 +36,12 @@ public class CommentController {
     @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 작성되었습니다.")
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{postId}")
-    public ResponseEntity<CommentDto.CommentResponse> createComment(
+    public ResponseEntity<CommentDto.WriteCommentResponse> createComment(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable int postId,
             @RequestBody CommentDto.CommentRequest commentRequest
     ) {
-        CommentDto.CommentResponse response = commentService.createComment(userDetails.getId(), postId, commentRequest);
+        CommentDto.WriteCommentResponse response = commentService.createComment(userDetails.getId(), postId, commentRequest);
         return ResponseEntity.ok(response);
     }
 
@@ -46,12 +50,12 @@ public class CommentController {
     @ApiResponse(responseCode = "200", description = "댓글이 성공적으로 수정되었습니다.")
     @SecurityRequirement(name = "bearerAuth")
     @PutMapping("/{commentId}")
-    public ResponseEntity<CommentDto.CommentResponse> updateComment(
+    public ResponseEntity<CommentDto.WriteCommentResponse> updateComment(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable int commentId,
             @RequestBody CommentDto.CommentRequest commentRequest
     ) {
-        CommentDto.CommentResponse response = commentService.updateComment(userDetails.getId(), commentId, commentRequest);
+        CommentDto.WriteCommentResponse response = commentService.updateComment(userDetails.getId(), commentId, commentRequest);
         return ResponseEntity.ok(response);
     }
 

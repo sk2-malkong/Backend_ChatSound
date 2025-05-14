@@ -15,6 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * /api/post로 시작하는 게시글 관련 REST API 제공하는 컨트롤러
+ */
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/post")
@@ -25,7 +29,7 @@ public class PostController {
     @Operation(summary = "전체 게시물 조회", description = "전체 게시물을 조회할 수 있습니다.")
     @ApiResponse(responseCode = "200", description = "게시글 목록이 성공적으로 반환됩니다.")
     @GetMapping("/list")
-    public ResponseEntity<Page<PostDto.Response>> getPosts(
+    public ResponseEntity<Page<PostDto.CheckPostResponse>> getPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
             @RequestParam(defaultValue = "createdAt") String sort,
@@ -35,7 +39,7 @@ public class PostController {
                 Sort.Direction.ASC : Sort.Direction.DESC;
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-        Page<PostDto.Response> posts = postService.getPostsWithPaging(pageable);
+        Page<PostDto.CheckPostResponse> posts = postService.getPostsWithPaging(pageable);
 
         return ResponseEntity.ok(posts);
     }
@@ -44,7 +48,7 @@ public class PostController {
     @Operation(summary = "상세 게시물 조회", description = "게시물 ID를 통해 해당 게시물의 상세 정보를 조회합니다.")
     @ApiResponse(responseCode = "200", description = "지정한 ID에 해당하는 게시물의 상세 정보가 반환됩니다.")
     @GetMapping("/{postId}")
-    public ResponseEntity<PostDto.Response> getPost(@PathVariable int postId, @RequestParam(defaultValue = "true") boolean increaseView) {
+    public ResponseEntity<PostDto.CheckDetailsResponse> getPost(@PathVariable int postId, @RequestParam(defaultValue = "true") boolean increaseView) {
         return ResponseEntity.ok(postService.getPostById(postId, increaseView));
     }
 
@@ -53,12 +57,12 @@ public class PostController {
     @ApiResponse(responseCode = "200", description = "게시물이 성공적으로 생성되었습니다.")
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/create")
-    public ResponseEntity<PostDto.Response> createPost(
+    public ResponseEntity<PostDto.WritePostResponse> createPost(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody PostDto.Request request
+            @RequestBody PostDto.PostRequest postRequest
     ) {
-        PostDto.Response response = postService.createPost(userDetails.getId(), request);
-        return ResponseEntity.ok(response);
+        PostDto.WritePostResponse writePostResponse = postService.createPost(userDetails.getId(), postRequest);
+        return ResponseEntity.ok(writePostResponse);
     }
 
     // 게시물 수정
@@ -66,14 +70,13 @@ public class PostController {
     @ApiResponse(responseCode = "200", description = "게시물이 성공적으로 수정되었습니다.")
     @SecurityRequirement(name = "bearerAuth")
     @PutMapping("/update/{postId}")
-    public ResponseEntity<PostDto.Response> updatePost(
+    public ResponseEntity<PostDto.WritePostResponse> updatePost(
             @AuthenticationPrincipal CustomUserDetails userDetails, // 여기가 null일 수도 있음
             @PathVariable int postId,
-            @RequestBody PostDto.Request request
+            @RequestBody PostDto.PostRequest postRequest
     ) {
-        System.out.println("userDetails = " + userDetails); // null인지 확인
-        PostDto.Response response = postService.updatePost(userDetails.getId(), postId, request);
-        return ResponseEntity.ok(response);
+        PostDto.WritePostResponse writePostResponse = postService.updatePost(userDetails.getId(), postId, postRequest);
+        return ResponseEntity.ok(writePostResponse);
     }
 
     // 게시물 삭제
@@ -94,7 +97,7 @@ public class PostController {
     @ApiResponse(responseCode = "200", description = "사용자가 작성한 게시글 목록이 성공적으로 반환됩니다.")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/my")
-    public ResponseEntity<Page<PostDto.Response>> getMyPosts(
+    public ResponseEntity<Page<PostDto.CheckPostResponse>> getMyPosts(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
@@ -105,7 +108,7 @@ public class PostController {
                 Sort.Direction.ASC : Sort.Direction.DESC;
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
-        Page<PostDto.Response> posts = postService.getMyPosts(userDetails.getId(), pageable);
+        Page<PostDto.CheckPostResponse> posts = postService.getMyPosts(userDetails.getId(), pageable);
 
         return ResponseEntity.ok(posts);
     }

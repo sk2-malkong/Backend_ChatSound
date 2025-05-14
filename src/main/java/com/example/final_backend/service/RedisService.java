@@ -6,6 +6,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * JWT 토큰 관리(특히 로그아웃 및 재발급)
+ */
+
 @Service
 @RequiredArgsConstructor
 public class RedisService {

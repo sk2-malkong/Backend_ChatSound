@@ -1,9 +1,9 @@
 package com.example.final_backend.controller;
 
-import com.example.final_backend.dto.UpdateProfileDto;
-import com.example.final_backend.dto.UserProfileDto;
+import com.example.final_backend.dto.ProfileDto;
 import com.example.final_backend.security.CustomUserDetails;
-import com.example.final_backend.service.UserService;
+import com.example.final_backend.service.UserPenaltyService;
+import com.example.final_backend.service.MypageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,21 +18,25 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * /api/user로 시작하는 마이 페이지 관련 REST API 제공하는 컨트롤러
+ */
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/user")
-public class UserController {
-    private final UserService userService;
+public class MypageController {
+    private final MypageService mypageService;
+    private final UserPenaltyService userPenaltyService;
 
     // 프로필 조회
     @Operation(summary = "프로필 조회", description = "로그인한 사용자의 프로필 정보를 반환합니다.")
     @ApiResponse(responseCode = "200", description = "프로필 조회 성공")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/profile")
-    public ResponseEntity<UserProfileDto> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        UserProfileDto dto = userService.getProfileDto(userDetails.getId());
-        return ResponseEntity.ok(dto);
+    public ResponseEntity<ProfileDto.UserProfile> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        ProfileDto.UserProfile profileDto = mypageService.getProfile(userDetails.getId());
+        return ResponseEntity.ok(profileDto);
     }
 
 
@@ -43,9 +47,9 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<String> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody UpdateProfileDto dto
+            @RequestBody ProfileDto.UpdateProfile profileDto
     ) {
-        userService.updateProfile(userDetails.getId(), dto);
+        mypageService.updateProfile(userDetails.getId(), profileDto);
         return ResponseEntity.ok("프로필이 성공적으로 수정되었습니다.");
     }
 
@@ -65,7 +69,7 @@ public class UserController {
             )
             @RequestParam("file") MultipartFile file
     ) throws IOException {
-        String imageUrl = userService.uploadProfileImage(userDetails.getId(), file);
+        String imageUrl = mypageService.uploadProfileImage(userDetails.getId(), file);
         return ResponseEntity.ok("이미지 업로드 성공: " + imageUrl);
     }
 
@@ -78,7 +82,7 @@ public class UserController {
     public ResponseEntity<String> deleteUser(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        userService.deleteUser(userDetails.getId());
+        mypageService.deleteUser(userDetails.getId());
         return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
     }
 
@@ -89,7 +93,7 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/penaltyCount")
     public ResponseEntity<Integer> getPenaltyCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        int count = userService.getPenaltyCount(userDetails.getId());
+        int count = userPenaltyService.getPenaltyCount(userDetails.getId());
         return ResponseEntity.ok(count);
     }
 
@@ -100,7 +104,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "제한 정보가 성공적으로 반환됩니다.")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, Object>> getLimitInfo(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        Map<String, Object> result = userService.getLimitInfo(userDetails.getId());
+        Map<String, Object> result = userPenaltyService.getLimitInfo(userDetails.getId());
         return ResponseEntity.ok(result);
     }
 }

@@ -7,9 +7,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ *  댓글 관리 Repository
+ */
+
 @Repository
 public interface CommentRepository extends JpaRepository<CommentEntity, Integer> {
+    // 게시글 ID 찾기
     List<CommentEntity> findByPost(PostEntity post);
-
-    int countByPost(PostEntity updated); // 게시글에서 댓글 수 조회용
 }

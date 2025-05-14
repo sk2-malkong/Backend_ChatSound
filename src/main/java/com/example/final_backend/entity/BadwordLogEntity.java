@@ -31,12 +31,12 @@ public class BadwordLogEntity {
 
     // 게시물 식별 번호
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "postId", nullable = true)
+    @JoinColumn(name = "postId")
     private PostEntity post;
 
     // 댓글 식별 번호
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "commentId", nullable = true)
+    @JoinColumn(name = "commentId")
     private CommentEntity comment;
 
     // 사용한 비속어
@@ -47,4 +47,17 @@ public class BadwordLogEntity {
 
     // 비속어 사용 일자
     private LocalDateTime createdAt;
+
+    public static BadwordLogEntity of(UserEntity user, PostEntity post, CommentEntity comment, String original, String filtered) {
+        BadwordLogEntity log = new BadwordLogEntity();
+        log.setUser(user);
+        log.setPost(post);
+        log.setOriginalWord(original);
+        log.setFilteredWord(filtered);
+        log.setCreatedAt(LocalDateTime.now());
+        if (comment != null) {
+            log.setComment(comment);
+        }
+        return log;
+    }
 }

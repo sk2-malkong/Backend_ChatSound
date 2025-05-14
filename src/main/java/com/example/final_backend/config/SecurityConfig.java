@@ -1,9 +1,10 @@
 package com.example.final_backend.config;
 
 import com.example.final_backend.security.JwtAuthorizationFilter;
-import com.example.final_backend.service.UserDetailsServiceImpl;
+
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+
 /**
  * Spring Security 설정
  * - JWT 필터 등록(JwtAuthorizationFilter)
@@ -32,8 +34,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final UserDetailsServiceImpl userDetailsService;
     private final JwtAuthorizationFilter jwtAuthorizationFilter;
+
+    // 프론트 주소
+    @Value("${FRONT_URL}")
+    private String frontendUrl;
 
     // 비밀번호 암호화
     @Bean
@@ -42,16 +47,7 @@ public class SecurityConfig {
     }
 
     // 인증 매니저 등록
-    // authenticationManager.authenticate가
-    // DaoAuthenticationProvider.authenticate() 호출하게 되면
-    // 내부에서 UserDetailsServiceImpl.java 에 있는
-    // UserDetailsServiceImpl.loadUserByUsername(id)를
-    // 자동 호출해 DB에서 사용자 정보를
-    // ID + PW를 기반으로 인증 프로세스를 시작하게 되는데
-    // 인증이 완료 되면 UserEntity를 기반으로 CustomUserDetails가 생성됨
-                                                      // AuthenticationConfiguration authConfig는
-                                                      // Spring이 자동 생성한 AuthenticationManager를
-    @Bean                                             // getAuthenticationManager()로 꺼내 쓰기 위해서 사용
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         // 로그인 인증 처리에 사용(AuthService에서 사용)
         // 내부에 DaoAuthenticationProvider가 들어 있어서 반환시 실행됨
@@ -120,7 +116,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000"); // 프론트 주소
+        configuration.addAllowedOrigin(frontendUrl);  // 프론트 주소
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true); //쿠키, 인증 헤더 등을 프론트엔드에서 사용할 수 있도록 허용

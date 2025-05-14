@@ -33,4 +33,18 @@ public class PenaltyCountEntity {
 
     // 패널티 횟수 업데이트 일자
     private LocalDate lastUpdate;
+
+    // 패널티 증가 및 저장을 위한 정적 메서드
+    public static PenaltyCountEntity incrementPenalty(UserEntity user, PenaltyCountEntity existing) {
+        PenaltyCountEntity penalty = (existing != null) ? existing : new PenaltyCountEntity();
+
+        penalty.setUser(user);
+        penalty.setUserId(user.getUserId());
+
+        int current = penalty.getPenaltyCount();
+        penalty.setPenaltyCount(current + 1);
+        penalty.setLastUpdate(LocalDate.now());
+
+        return penalty;
+    }
 }
