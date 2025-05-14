@@ -204,16 +204,15 @@ backend/
         │               ├── controller/
         │               │   ├── AuthController.java
         │               │   ├── CommentController.java
+        │               │   ├── MypageController.java
         │               │   ├── PostController.java
-        │               │   ├── SearchController.java
-        │               │   └── UserController.java
+        │               │   └── SearchController.java
         │               ├── dto/
         │               │   ├── AuthDto.java
         │               │   ├── CommentDto.java
         │               │   ├── JwtDto.java
         │               │   ├── PostDto.java
-        │               │   ├── UpdateProfileDto.java
-        │               │   └── UserProfileDto.java
+        │               │   └── ProfileDto.java
         │               ├── entity/
         │               │   ├── BadwordLogEntity.java
         │               │   ├── CommentEntity.java
@@ -221,26 +220,33 @@ backend/
         │               │   ├── PostEntity.java
         │               │   ├── UserEntity.java
         │               │   └── UserLimitsEntity.java
+        │               ├── factory/
+        │               │   └── UserFactory.java
         │               ├── repository/
-        │               │   ├── AuthRepository.java
         │               │   ├── BadwordLogRepository.java
         │               │   ├── CommentRepository.java
         │               │   ├── PenaltyCountRepository.java
         │               │   ├── PostRepository.java
-        │               │   └── UserLimitsRepository.java
+        │               │   ├── UserLimitsRepository.java
+        │               │   └── UserRepository.java
         │               ├── security/
         │               │   ├── CustomUserDetails.java
         │               │   └── JwtAuthorizationFilter.java
         │               └── service/
+        │                   ├── AsyncService.java
         │                   ├── AuthService.java
+        │                   ├── CheckBadwordService.java
         │                   ├── CommentService.java
         │                   ├── JwtService.java
+        │                   ├── MypageService.java
         │                   ├── PostService.java
         │                   ├── RedisService.java
+        │                   ├── ServerToProxyJwtService.java
         │                   ├── UserDetailsServiceImpl.java
-        │                   └── UserService.java
+        │                   └── UserPenaltyService.java
         └── resources/
             ├── application.properties
+            └── dummy.txt
 ```
 
 
