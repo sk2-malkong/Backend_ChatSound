@@ -46,8 +46,8 @@ public class UserLimitsEntity {
         limit.setUserId(user.getUserId());
         limit.setIsActive(false);
         limit.setStartDate(LocalDateTime.now());
-        //limit.setEndDate(LocalDateTime.now().plusHours(24));  // 제한 시간 24 시간
-        limit.setEndDate(LocalDateTime.now().plusMinutes(3)); // 제한 시간 3분
+        limit.setEndDate(LocalDateTime.now().plusHours(24));  // 제한 시간 24 시간
+        //limit.setEndDate(LocalDateTime.now().plusMinutes(3)); // 제한 시간 3분
 
         return Optional.of(limit);
     }
