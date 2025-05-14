@@ -52,15 +52,19 @@ public class UserPenaltyService {
         }
 
         List<BadwordLogEntity> logs = user.getBadwordLogs();
-        result.put("logGroups", groupLogsByFive(logs));
+        result.put("logGroups", groupLogsByFive(logs, user));
 
         return result;
     }
 
     // 5개씩 로그 그룹화
-    private List<Map<String, Object>> groupLogsByFive(List<BadwordLogEntity> logs) {
+    private List<Map<String, Object>> groupLogsByFive(List<BadwordLogEntity> logs, UserEntity user) {
         List<Map<String, Object>> groups = new ArrayList<>();
         if (logs == null || logs.size() < 5) return List.of();
+
+        // 사용자 제한 시작 및 종료 시간 가져오기
+        LocalDateTime start = (user.getLimits() != null) ? user.getLimits().getStartDate() : null;
+        LocalDateTime end = (user.getLimits() != null) ? user.getLimits().getEndDate() : null;
 
         for (int i = 0; i + 4 < logs.size(); i += 5) {
             List<Map<String, Object>> group = new ArrayList<>();
@@ -73,9 +77,7 @@ public class UserPenaltyService {
                 ));
             }
 
-            LocalDateTime start = logs.get(i + 4).getCreatedAt();
-            LocalDateTime end = start.plusMinutes(3);  // 운영 시 수정 가능
-
+            // endDate를 제한 종료 시간으로 설정
             groups.add(Map.of(
                     "startDate", start,
                     "endDate", end,
