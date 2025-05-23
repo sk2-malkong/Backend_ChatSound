@@ -37,7 +37,7 @@ public class SecurityConfig {
     private final JwtAuthorizationFilter jwtAuthorizationFilter;
 
     // 프론트 주소
-    @Value("${FRONT_URL}")
+    @Value("${frontend.url}")
     private String frontendUrl;
 
     // 비밀번호 암호화

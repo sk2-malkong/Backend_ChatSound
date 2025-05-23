@@ -22,7 +22,7 @@ public class MypageService {
     private final UserRepository userRepository;
 
     // 프로필 이미지 URL
-    @Value("${PROFILE_IMAGE_URL}")
+    @Value("${profile.image-url}")
     private String profileImageUrl;
 
     // 프로필 정보 조회

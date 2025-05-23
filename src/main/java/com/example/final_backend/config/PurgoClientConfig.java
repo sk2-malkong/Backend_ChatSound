@@ -15,11 +15,10 @@ import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class PurgoClientConfig {
-
-    @Value("${PURGO_CLIENT_API_KEY}")
+    @Value("${proxy.client-api-key}")
     private String apiKey;
 
-    @Value("${PURGO_PROXY_BASE_URL}")
+    @Value("${proxy.base-url}")
     private String baseUrl;
 
     @Bean

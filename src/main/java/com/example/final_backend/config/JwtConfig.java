@@ -1,14 +1,11 @@
 package com.example.final_backend.config;
 
+
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * application.properties에 정의된 JWT 설정을 바인딩
- * - JwtService에서 토큰 생성 시 필요한 필드를 해당 클래스를 통해 주입 받음
- */
 
 @Configuration
 // application.properties에 jwt.secret 등으로 시작하는 항목 자동 주입
