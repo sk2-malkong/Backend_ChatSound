@@ -62,12 +62,9 @@ public class UserPenaltyService {
         List<Map<String, Object>> groups = new ArrayList<>();
         if (logs == null || logs.size() < 5) return List.of();
 
-        // 사용자 제한 시작 및 종료 시간 가져오기
-        LocalDateTime start = (user.getLimits() != null) ? user.getLimits().getStartDate() : null;
-        LocalDateTime end = (user.getLimits() != null) ? user.getLimits().getEndDate() : null;
-
         for (int i = 0; i + 4 < logs.size(); i += 5) {
             List<Map<String, Object>> group = new ArrayList<>();
+
             for (int j = i; j < i + 5; j++) {
                 BadwordLogEntity log = logs.get(j);
                 Map<String, Object> logMap = new HashMap<>();
@@ -77,10 +74,13 @@ public class UserPenaltyService {
                 group.add(logMap);
             }
 
-            // endDate를 제한 종료 시간으로 설정
+            // 마지막 로그의 createdAt 기준으로 startAt, endAt 설정
+            LocalDateTime startAt = logs.get(i + 4).getCreatedAt();  // 그룹의 마지막 로그
+            LocalDateTime endAt = startAt.plusHours(24);
+
             Map<String, Object> groupInfo = new HashMap<>();
-            groupInfo.put("startDate", start);
-            groupInfo.put("endDate", end);
+            groupInfo.put("startDate", startAt);
+            groupInfo.put("endDate", endAt);
             groupInfo.put("logs", group);
             groups.add(groupInfo);
         }
