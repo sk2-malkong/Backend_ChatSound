@@ -70,19 +70,19 @@ public class UserPenaltyService {
             List<Map<String, Object>> group = new ArrayList<>();
             for (int j = i; j < i + 5; j++) {
                 BadwordLogEntity log = logs.get(j);
-                group.add(Map.of(
-                        "originalWord", log.getOriginalWord(),
-                        "filteredWord", log.getFilteredWord(),
-                        "createdAt", log.getCreatedAt()
-                ));
+                Map<String, Object> logMap = new HashMap<>();
+                logMap.put("originalWord", log.getOriginalWord());
+                logMap.put("filteredWord", log.getFilteredWord());
+                logMap.put("createdAt", log.getCreatedAt());
+                group.add(logMap);
             }
 
             // endDate를 제한 종료 시간으로 설정
-            groups.add(Map.of(
-                    "startDate", start,
-                    "endDate", end,
-                    "logs", group
-            ));
+            Map<String, Object> groupInfo = new HashMap<>();
+            groupInfo.put("startDate", start);
+            groupInfo.put("endDate", end);
+            groupInfo.put("logs", group);
+            groups.add(groupInfo);
         }
 
         return groups;
