@@ -36,6 +36,13 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        // 인증 필터를 건너뛸 경로 설정
+        String uri = request.getRequestURI();
+        if (uri.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response); // 인증 없이 통과
+            return;
+        }
+
         // 1. 헤더에서 토큰 추출
         // ex: "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI..."
         String authHeader = request.getHeader("Authorization");
