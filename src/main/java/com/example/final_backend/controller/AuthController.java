@@ -61,7 +61,7 @@ public class AuthController {
     }
 
 
-    // Access 토큰 재발급(백엔드 테스트용)
+    // Access 토큰 재발급
     @Operation(summary = "토큰 재발급", description = "Refresh Token을 받아 인가 확인 후 토큰을 재발급합니다.")
     @ApiResponse(responseCode = "200", description = "토큰 재발급 성공")
     @PostMapping("/refresh")
@@ -70,7 +70,7 @@ public class AuthController {
             JwtDto.TokenResponse response = authService.updateToken(request.getRefreshToken());
 
             return ResponseEntity.ok()
-                    .header("Access-Token", "Bearer " + response.getAccessToken())
+                    .header("Authorization", "Bearer " + response.getAccessToken())
                     .header("Refresh-Token", response.getRefreshToken())
                     .body("토큰 재발급 성공");
         } catch (IllegalArgumentException e) {

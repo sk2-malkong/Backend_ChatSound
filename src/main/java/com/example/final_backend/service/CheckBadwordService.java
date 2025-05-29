@@ -41,7 +41,7 @@ public class CheckBadwordService {
     @Transactional
     public String getFilteredText(String text, UserEntity user, PostEntity post, CommentEntity comment) {
         try {
-            // 🔐 요청 본문 구성
+            // 요청 본문 구성
             Map<String, String> body = new HashMap<>();
             body.put("text", text);
 
@@ -55,12 +55,12 @@ public class CheckBadwordService {
 
             HttpEntity<String> http = new HttpEntity<>(jsonBody, headers);
 
-            // 🔁 프록시 서버로 요청
+            // 프록시 서버로 요청
             ResponseEntity<Map<String, Object>> response = purgoRestTemplate.postForEntity(
                     baseUrl, http, (Class<Map<String, Object>>) (Class<?>) Map.class
             );
 
-            // ✅ 응답 처리
+            // 응답 처리
             System.out.println("📦 [응답 바디] " + response.getBody());
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
